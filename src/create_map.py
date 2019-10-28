@@ -73,20 +73,11 @@ def leftMostPointIndex(points):
 
 def orientation(p, q, r):
         #------------find orientation of ordered triplet (p, q, r)
-        #return
-        
-        #0 = p, q and r are colinear  
-        #1 = Clockwise  
-        #2 = Counterclockwise
+     
 
         val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1]) 
   
-        if val == 0: 
-                return 0
-        elif val > 0: 
-                return 1
-        else: 
-                return 2
+        return val
 
 
 
@@ -132,7 +123,7 @@ def extraPointsMod(obsticle):
                 print("dealing with point: " + str(point))
                 a = point[0]  #----------------x 
                 b = point[1]  #---------------y
-                w = 36        #---------------robot val
+                w = 18        #---------------robot val assuming its in the middle
                 #all points with a sqaure at every corner of orgininal vertex 
                 newObsticle.append([a-w, b+w])
                 newObsticle.append([a-w, b])
@@ -152,12 +143,72 @@ def extraPointsMod(obsticle):
 
 
 
+#-----------------------------------------------creating the lines between vertices-----------------------
+def createLines(obsVerts, allVerts,obsEdges):
+        
+        n = len(allVerts)
+        lines = []
+        print( "obsVerts: " + str(obsVerts))
+        print( "allVerts: " + str(allVerts))
+        
+        for i  in range(n):
+                a = allVerts[i]
+                for j in range(i+1,n):
+                        b = allVerts[j]
+                        elem = [a,b]
+                        if not isCollision(a,b,obsEdges) :
+                                lines.append(elem)
+                
+
+        return lines
 
 
+#--------------------------------------------function to see if lines intersect----------------------------------
+def doIntersect(p1, p2, q1, q2):
+        #conditions for intersection
+        '''
+        print("p1: " + str(p1))
+        print("p2: " + str(p2))
+        print("q1: " + str(q1))
+        print("q2: " + str(q2))
+        '''
+        A = min(p1[1],p2[1]) < max(q1[1],q2[1])
+        B = min(q1[1],q2[1]) < max(p1[1],p2[1])
+        C = min(q1[0],q2[0]) < max(p1[0],p2[0])
+        D = min(p1[0],p2[0]) < max(q1[0],q2[0])
+        E = orientation(p1,p2,q1) * orientation(p1,p2,q2) < 0
+        F = orientation(q1,q2,p1) * orientation(q1,q2,p2) < 0
+
+        
+        if A and B and C and D and E and F :
+                return True
+        return False
 
 
+def isCollision(p1,p2, obsEdges):
+        for v1, v2 in obsEdges:
+                #checks if two lines intersect ie collision 
+                if doIntersect(p1, p2, v1, v2):
+                        return True
+                
+        #print("no collision detected")
+        return False
 
 
+def getEdges(obsVerts):
+        n = len(obsVerts)
+        lines = []
+        print( "obsVerts: " + str(obsVerts))
+        
+        for i  in range(n):
+                a = obsVerts[i]
+                for j in range(i+1,n):
+                        b = obsVerts[j]
+                        elem = [a,b]
+                        lines.append(elem)
+                
+
+        return lines
 
 
 
@@ -214,12 +265,40 @@ if __name__ == "__main__":
 	goal = load_goal("../data/goal.txt")
 	start = [0, 0]
 
+        strtEnd = [start, goal]
+
+        #list of all vertex points for obstacle hulls 
+        obstacleHulls = []
+        obsVertices = []
+        obsEdges = []
+       
+        
         
 	# draw obstacles
 	for ob in obstacles:
+                
                 #get the points for the hull
                 obMod = extraPointsMod(ob)
-                obHull = convexHull(obMod)
+
+                #this is where the points of the hull will be stores
+                obHull = []
+                #returns indexes of hull vertex points in obMod 
+                obHullInx = ConvexHull(obMod).vertices
+                #append the vertex to the thing 
+                for i in obHullInx:
+                        obHull.append(obMod[i])
+
+                #extends the list of all hulls 
+                obstacleHulls.append(obHull)
+                obsVertices.extend(obHull)
+                obsLines = getEdges(obHull)
+                obsEdges.extend(obsLines)
+                
+                
+                
+                #obHull = ConvexHull(obMod)
+                print("the hull is: ")
+                print(obHull)
 
                 #convert orginal obstcl to img
 		ob = map2img(ob)
@@ -233,6 +312,19 @@ if __name__ == "__main__":
 		cv2.fillConvexPoly(img, ob.reshape(-1, 1, 2), (255,255,0))
                 #outline of the thing 
                 cv2.drawContours(img, [hull.reshape(-1, 1, 2)],-1, (255,255, 10))
+
+
+        #obsVertices = obstacleHulls
+        allVertices = obsVertices + strtEnd
+        lines = createLines(obsVertices,allVertices,obsEdges)
+        print(lines)
+        #lemme check dis shit 
+        for line in lines:
+                lineImg = map2img(line)
+                cv2.drawContours(img, [lineImg.reshape(-1, 1, 2)],-1, (255,255, 10))
+                
+        
+        
 
 	# draw start and goal point
 	goal = tuple(map2img([goal])[0])
