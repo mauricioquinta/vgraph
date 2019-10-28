@@ -3,6 +3,8 @@
 import numpy as np # I update the numpy to 1.15.1 using sudo pip install --upgrade numpy
 import cv2
 from scipy.spatial import ConvexHull, convex_hull_plot_2d
+from marker import myMarker
+
 
 		
 def load_obstacles(object_path):
@@ -26,16 +28,16 @@ def load_obstacles(object_path):
 			coordinates = list(map(int, line.strip().split(' ')))
 			if len(coordinates) == 1:
 				obstacles.append(obstacle)
-                                print("this obsticle: " + str(obstacle))
+                                #print("this obsticle: " + str(obstacle))-------------------------------print
 				obstacle = []
 			else:
 				obstacle.append(coordinates)
 	obstacles.append(obstacle)
-	assert len(obstacles)==numObstacles, "number of obstacles does not match the first line"
-
-        #for my sanity 
-        print("the list of obsticles: ")
-        print(obstacles)
+ 	assert len(obstacles)==numObstacles, "number of obstacles does not match the first line"
+        
+        #-----------------------------------------------printing for my sanity------------
+        #print("the list of obsticles: ")
+        #print(obstacles)
 	return obstacles
 
 def load_goal(goal_path):
@@ -48,79 +50,15 @@ def load_goal(goal_path):
 
 
 
-#--------------------------------------jarvis Hull Algorithm Implementation----------------------------------
-
-def leftMostPointIndex(points):
-        #------------Finding the left most point---------------
-        print("doing leftMost")
-
-        mIndex = 0
-        for i in range(len(points)):
-            #points[i][0]--->x value of point
-            if points[i][0] < points[mIndex][0]: 
-                mIndex = i
-        #handles ties in y ---want highest 
-            elif points[i][0] == points[mIndex][0]: 
-                if points[i][1] > points[mIndex][1]: 
-                    mIndex = i
-                    
-        return mIndex
-
-
-
-
-#https://stackoverflow.com/questions/17592800/how-to-find-the-orientation-of-three-points-in-a-two-dimensional-space-given-coo
-
-def orientation(p, q, r):
-        #------------find orientation of ordered triplet (p, q, r)
-     
-
-        val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1]) 
-  
-        return val
-
-
-
-def convexHull(points):
-        print("doing Hull shit")
-        n = len(points)
-
-        if n < 3:
-                return
-
-        
-        j = leftMostPointIndex(points)
-        p = j
-        q = 0
-        hull = []
-        Done = False 
-        while not Done :
-                hull.append(points[p])
-
-                #find a point q s.t orientation(p,x,q) is counterClockwise forAll x
-                #keep track of most counter clockwise update q accordingly 
-                q = (p+1) % n
-
-                for i in range(n):
-                        if(orientation(points[p],points[i], points[q]) == 2):
-                                q = i
-
-                #p is updated 
-                p = q 
-
-                if p == j:
-                        Done = True
-                        
-        return hull 
         
         
 #-----------------------------------getting all points for convex hull--------------
 
 def extraPointsMod(obsticle):
-        print("appending shit")
+        #print("appending shit")-------------------------------------------------------------------print
         newObsticle = []
         for point in obsticle:
-                print("dealing with point: " + str(point))
+                #print("dealing with point: " + str(point))----------------------------------------print
                 a = point[0]  #----------------x 
                 b = point[1]  #---------------y
                 w = 18        #---------------robot val assuming its in the middle
@@ -144,27 +82,50 @@ def extraPointsMod(obsticle):
 
 
 #-----------------------------------------------creating the lines between vertices-----------------------
-def createLines(obsVerts, allVerts,obsEdges):
-        
-        n = len(allVerts)
+def createLines(obsHulls, obsEdges):
+
+        #print("obsHulls: " + str(obsHulls))--------------------------------------------------print 
+        n = len(obsHulls)
         lines = []
-        print( "obsVerts: " + str(obsVerts))
-        print( "allVerts: " + str(allVerts))
-        
-        for i  in range(n):
-                a = allVerts[i]
-                for j in range(i+1,n):
-                        b = allVerts[j]
-                        elem = [a,b]
-                        if not isCollision(a,b,obsEdges) :
-                                lines.append(elem)
+        #print( "obsVerts: " + str(obsVerts))
+        #print( "allVerts: " + str(allVerts))
+        #print("all hulls: " + str(obsHulls))
+        for i in range(n):
+                hull1 = obsHulls[i]
+                
+                for a in hull1:
+                        #print("point a: " + str(a))----------------------------------------print
+                        for j in range(i+1,n):
+                                hull2 = obsHulls[j]
+                                for b in hull2:
+                                        #print("point b: " + str(b))------------------------print 
+                                        elem = [a,b]
+                                        #print(elem)-----------------------------------------print
+                                        if not isCollision(a,b,obsEdges) :
+                                                lines.append(elem)
                 
 
         return lines
 
 
-#--------------------------------------------function to see if lines intersect----------------------------------
-def doIntersect(p1, p2, q1, q2):
+
+#-----------------------------------------checks if there are collisions between obsticle hull and lines between points
+def isCollision(p1,p2, obsEdges):
+        for edge in obsEdges:
+                #print("edge: " + str(edge))-------------------------------------------------------------------print
+                q1 = edge[0]
+                q2 = edge[1]
+                #checks if two lines intersect ie collision 
+                if isIntersect(p1, p2, q1, q2):
+                        return True
+                
+        #print("no collision detected")
+        return False
+
+
+
+#-------------------------------------------- helper function to see if lines intersect----------------------------------
+def isIntersect(p1, p2, q1, q2):
         #conditions for intersection
         '''
         print("p1: " + str(p1))
@@ -172,42 +133,60 @@ def doIntersect(p1, p2, q1, q2):
         print("q1: " + str(q1))
         print("q2: " + str(q2))
         '''
-        A = min(p1[1],p2[1]) < max(q1[1],q2[1])
-        B = min(q1[1],q2[1]) < max(p1[1],p2[1])
-        C = min(q1[0],q2[0]) < max(p1[0],p2[0])
-        D = min(p1[0],p2[0]) < max(q1[0],q2[0])
-        E = orientation(p1,p2,q1) * orientation(p1,p2,q2) < 0
-        F = orientation(q1,q2,p1) * orientation(q1,q2,p2) < 0
 
-        
-        if A and B and C and D and E and F :
+        o1 = orientation(p1, p2, q1)
+        o2 = orientation(p1, p2, q2)
+        o3 = orientation(q1, q2, p1)
+        o4 = orientation(q1, q2, p2)
+
+        if (equalVerts(p1, q1) or equalVerts(p1, q2) or equalVerts(p2, q1) or equalVerts(p2, q2)):
+                return False
+        if (o1 != o2 and o3 != o4):
                 return True
         return False
 
-
-def isCollision(p1,p2, obsEdges):
-        for v1, v2 in obsEdges:
-                #checks if two lines intersect ie collision 
-                if doIntersect(p1, p2, v1, v2):
-                        return True
-                
-        #print("no collision detected")
-        return False
+#----------------------------------------used above for is Intersect 
+def equalVerts(v1, v2):
+    return (v1[0] == v2[0] and v1[1] == v2[1])
 
 
+
+
+#https://stackoverflow.com/questions/17592800/how-to-find-the-orientation-of-three-points-in-a-two-dimensional-space-given-coo
+
+def orientation(p, q, r):
+        #------------find orientation of ordered triplet (p, q, r)
+     
+        #---0 --> p, q and r are colinear  
+        #---1 --> Clockwise  
+        #---2 --> Counterclockwise 
+        val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1]) 
+
+        
+        #return val
+        if val == 0:
+                return 0
+        elif val > 0:
+                return 1
+        return 2
+
+
+
+
+#---------------------given a list of vertices for some object returns its edges as set of 2 points--------
 def getEdges(obsVerts):
         n = len(obsVerts)
         lines = []
-        print( "obsVerts: " + str(obsVerts))
+        #print( "obsVerts: " + str(obsVerts))----------------------------------------------------------print
         
-        for i  in range(n):
+        for i  in range(n-1):
                 a = obsVerts[i]
-                for j in range(i+1,n):
-                        b = obsVerts[j]
-                        elem = [a,b]
-                        lines.append(elem)
-                
+                b = obsVerts[i+1]
+                elem = [a,b]
+                lines.append(elem)
 
+        lastLine = [ obsVerts[0], obsVerts[n-1]]
+        lines.append(lastLine)
         return lines
 
 
@@ -258,70 +237,73 @@ def img2map(ob):
 
 if __name__ == "__main__":
 
+
+        
 	# Create a black image
 	img = np.full((600,1200,3), 255, np.uint8)
-
 	obstacles = load_obstacles("../data/world_obstacles.txt")
 	goal = load_goal("../data/goal.txt")
 	start = [0, 0]
 
+        #sublist holding start and end points for later 
         strtEnd = [start, goal]
 
-        #list of all vertex points for obstacle hulls 
-        obstacleHulls = []
-        obsVertices = []
-        obsEdges = []
+        #some list we will need 
+        obstacleHulls = [] #<------list of all obsticle hulls as list of vertices
+        #obsVertices = []   #<------list of all objectHull vertices
+        obsEdges = []      #<------list of all edges of obsticleHulls
        
-        
         
 	# draw obstacles
 	for ob in obstacles:
-                
+
+                #----------------------------------------work for the hull and list info--------------------
                 #get the points for the hull
                 obMod = extraPointsMod(ob)
 
-                #this is where the points of the hull will be stores
+                #this is where the points of the hull will be stored
                 obHull = []
+                
                 #returns indexes of hull vertex points in obMod 
                 obHullInx = ConvexHull(obMod).vertices
-                #append the vertex to the thing 
+                #append the vertex to the list 
                 for i in obHullInx:
                         obHull.append(obMod[i])
 
                 #extends the list of all hulls 
                 obstacleHulls.append(obHull)
-                obsVertices.extend(obHull)
+                #obsVertices.extend(obHull)
+                #adds edges to list of edges
                 obsLines = getEdges(obHull)
                 obsEdges.extend(obsLines)
+                #obsEdgeLst.append(obsLines)
                 
-                
-                
-                #obHull = ConvexHull(obMod)
-                print("the hull is: ")
-                print(obHull)
 
+
+
+                #-------------------------------actual drawing---------------
                 #convert orginal obstcl to img
 		ob = map2img(ob)
                 #convert hull to img 
                 hull = map2img(obHull)
+                
                 #print("the hull is: " + str(hull))
 		# print(len(ob))
 		# print(ob)
                 
                 #actually takes the obsticles as points to display 
 		cv2.fillConvexPoly(img, ob.reshape(-1, 1, 2), (255,255,0))
-                #outline of the thing 
-                cv2.drawContours(img, [hull.reshape(-1, 1, 2)],-1, (255,255, 10))
+
+                
+                
 
 
-        #obsVertices = obstacleHulls
-        allVertices = obsVertices + strtEnd
-        lines = createLines(obsVertices,allVertices,obsEdges)
-        print(lines)
-        #lemme check dis shit 
-        for line in lines:
-                lineImg = map2img(line)
-                cv2.drawContours(img, [lineImg.reshape(-1, 1, 2)],-1, (255,255, 10))
+        
+        #allVertices = obsVertices + strtEnd#<--------------------list of all vertices including start and end
+        #list of all edges connecting vertices of object hulls avoid collisions
+        obstacleHulls.append(strtEnd)
+        lines = createLines(obstacleHulls,obsEdges)
+        
                 
         
         
