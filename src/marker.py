@@ -24,6 +24,7 @@ class myMarker(object):
 
         #basic marker stuff
         line = Marker()
+        #line.header.frame_id = 'base_footprint'
         line.header.frame_id = 'map'
         line.ns = "vGraph"
         line.type = line.LINE_STRIP
@@ -35,14 +36,14 @@ class myMarker(object):
         line.color.a = 1.0
         if isPath:
             line.color.g = 5.0
+            line.scale.x = 0.06
         else:
             line.color.r = 5.0
-        line.scale.x = 0.02
+            line.scale.x = 0.03
         line.scale.y = 0.02
         line.scale.z = 0.02
 
         #create points and do line.points.append(point)
-        print("drawing line: " + str(vertices))
         for vertex in vertices:
             point = Point()
             point.x = vertex[0]/100.0
@@ -51,7 +52,6 @@ class myMarker(object):
 
             #append line to markerarray and publish it to rviz
             self.markerArr.markers.append(line)
-
             
             self.publisher.publish(self.markerArr) #takes an array of list
             self.r.sleep()

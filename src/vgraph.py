@@ -4,17 +4,17 @@ import numpy as np # I update the numpy to 1.15.1 using sudo pip install --upgra
 import cv2
 from scipy.spatial import ConvexHull, convex_hull_plot_2d
 from marker import myMarker
-from create_map import load_obstacles, load_goal, orientation, extraPointsMod, createLines, isCollision, getEdges, isIntersect, map2img, img2map
-import djikstra
+import create_map as cm
+import djikstra as dj
 import rospy
 
 def main():
 
     
     #load Obstacles and goals 
-    obstacles = load_obstacles("../data/world_obstacles.txt")
-    goal = load_goal("../data/goal.txt")
-    start = [0, 0]
+    obstacles = cm.load_obstacles("../data/world_obstacles.txt")
+    goal = cm.load_goal("../data/goal.txt")
+    start = [0., 0.]
 
     #sublist holding start and end points for later 
     strtEnd = [start, goal]
@@ -29,10 +29,11 @@ def main():
         
     # draw obstacles
     for ob in obstacles:
+        print(ob)
 
         #----------------------------------------work for the hull and list info--------------------
         #get the points for the hull
-        obMod = extraPointsMod(ob)
+        obMod = cm.extraPointsMod(ob)
 
         #this is where the points of the hull will be stored
         obHull = []
@@ -41,6 +42,7 @@ def main():
         obHullInx = ConvexHull(obMod).vertices
         #append the vertex to the list 
         for i in obHullInx:
+            print(type(i), i, obMod[i])
             obHull.append(obMod[i])
 
         #extends the list of all hulls 
@@ -48,7 +50,7 @@ def main():
         obsVertices.extend(obHull)
         
         #adds edges to list of edges
-        obsLines = getEdges(obHull)
+        obsLines = cm.getEdges(obHull)
         obsEdges.extend(obsLines)
                 
         #print("the hull is: ")
@@ -70,10 +72,10 @@ def main():
     #list of all edges connecting vertices of object hulls avoid collisions
     #add start and end as hull 
     obstacleHulls.append(strtEnd)
-    lines = createLines(obstacleHulls, obsEdges)
+    lines = cm.createLines(obstacleHulls, obsEdges)
         
-    path = djikstra.setup(allVertices,lines,start,goal)
-    print(path)
+    path = dj.setup(allVertices,lines,start,goal)
+    dj._print(path)
     #-------------------draws lines onto the map------------
     for line in lines:
         #lineImg = map2img(line)
@@ -85,7 +87,6 @@ def main():
         mk.marker(line,True)
         
         
-
 if __name__ == '__main__':
     main()
 

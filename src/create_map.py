@@ -127,12 +127,6 @@ def isCollision(p1,p2, obsEdges):
 #-------------------------------------------- helper function to see if lines intersect----------------------------------
 def isIntersect(p1, p2, q1, q2):
         #conditions for intersection
-        '''
-        print("p1: " + str(p1))
-        print("p2: " + str(p2))
-        print("q1: " + str(q1))
-        print("q2: " + str(q2))
-        '''
 
         o1 = orientation(p1, p2, q1)
         o2 = orientation(p1, p2, q2)

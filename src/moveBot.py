@@ -24,7 +24,7 @@ class Robot():
 
     def translate(self, distance):
 
-        vel = 1.
+        vel = .2
 
         # Create a message object
         move_cmd = Twist()
@@ -49,14 +49,16 @@ class Robot():
         
     def rotate(self, angle):
 
+        omega = .05
+
         # Create a message object
         move_cmd = Twist()
 
         # Set the angular speed
-        move_cmd.angular.z = 1. if angle > 0 else -1.
+        move_cmd.angular.z = omega if angle > 0 else -omega
 
         # Time taken by robot to rotate for given angle
-        duration = abs(angle) / 1.
+        duration = abs(angle) / omega
 
         # Keep publishing for that duration
         ticks = int(duration * self.rate)
@@ -82,7 +84,7 @@ def mag(a):
 def sub(a,b):
     return [a[0]-b[0], a[1]-b[1]]
 
-def main():
+def run():
 
     print("loading data")
     lines = []
@@ -117,4 +119,4 @@ def main():
         robot.translate(dist)
 
 if __name__ == "__main__":
-        main()
+        run()
