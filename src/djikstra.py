@@ -6,13 +6,7 @@ import cv2
 import pickle
 from scipy.spatial import ConvexHull, convex_hull_plot_2d
 
-
-def main():
-	
-	#wait for allLines and allVertices
-	print("hi")
-				
-def setup(allVertices, allLines, start, goal):
+def getPath(allVertices, allLines, start, goal):
 
 	points = []
 	startP = None
@@ -43,7 +37,7 @@ def setup(allVertices, allLines, start, goal):
 	print("done setting up!")
 
 	print("calculating path...")
-	path = getPath(points,pointsD,startP,endP)
+	path = djikstra(points,pointsD,startP,endP)
 	print('done!')
 
 	#save the path
@@ -62,12 +56,8 @@ class Point:
 	def __str__(self):
 		return "" + str(self.pos) + ": d=" + str(self.dist) + ", n=" + str(len(self.neighbors))
 
-
-def _print(points):
-	for p in points:
-		print(str(p))
-
-def getPath(points,dic,start,end):
+#vanilla implementation of dijkstra's algorithm
+def djikstra(points,dic,start,end):
 	if not start in points:
 		points.insert(0,start)
 	if not end in points:
@@ -111,6 +101,7 @@ def getPath(points,dic,start,end):
 
 	return lines
 
+#pops smallest element(returns smallest,self)
 def getMin(points):
 	smallest = points[0]
 	for p in points:
@@ -119,5 +110,7 @@ def getMin(points):
 	points.remove(smallest)
 	return smallest, points
 
-if __name__ == "__main__":
-	main()
+def _print(points):
+	for p in points:
+		print(str(p))
+

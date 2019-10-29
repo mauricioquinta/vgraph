@@ -9,7 +9,6 @@ from geometry_msgs.msg import Twist
 class Robot():
 
     def __init__(self):
-
         # Give the node the name 'moveBot'
         rospy.init_node('moveBot', anonymous=False)
 
@@ -22,8 +21,8 @@ class Robot():
         self.rate = 50
         self.r = rospy.Rate(self.rate)
 
+	#move the robot distance m forward
     def translate(self, distance):
-
         vel = .2
 
         # Create a message object
@@ -47,8 +46,8 @@ class Robot():
         for _ in range(5):
             self.r.sleep()
         
+	#move the robot angle radians
     def rotate(self, angle):
-
         omega = .05
 
         # Create a message object
@@ -107,15 +106,10 @@ def run():
         if math.atan2(dif[1],dif[0]) < theta:
             delta = -delta
 
-        print("oldtheta", theta)
         theta = math.atan2(dif[1], dif[0])
-        print("moving ", str(delta), " degrees")
-        print("theta", theta)
-        print("dif", dif)
         robot.rotate(delta)
 
         dist = mag(dif)/100
-        print("moving ", str(dist), " units")
         robot.translate(dist)
 
 if __name__ == "__main__":

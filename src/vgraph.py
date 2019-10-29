@@ -10,7 +10,6 @@ import rospy
 
 def main():
 
-    
     #load Obstacles and goals 
     obstacles = cm.load_obstacles("../data/world_obstacles.txt")
     goal = cm.load_goal("../data/goal.txt")
@@ -29,9 +28,7 @@ def main():
         
     # draw obstacles
     for ob in obstacles:
-        print(ob)
 
-        #----------------------------------------work for the hull and list info--------------------
         #get the points for the hull
         obMod = cm.extraPointsMod(ob)
 
@@ -42,7 +39,6 @@ def main():
         obHullInx = ConvexHull(obMod).vertices
         #append the vertex to the list 
         for i in obHullInx:
-            print(type(i), i, obMod[i])
             obHull.append(obMod[i])
 
         #extends the list of all hulls 
@@ -52,42 +48,29 @@ def main():
         #adds edges to list of edges
         obsLines = cm.getEdges(obHull)
         obsEdges.extend(obsLines)
-                
-        #print("the hull is: ")
-        #print(obHull)
 
-
-
-        #-------------------------------actual drawing hopefully publishing each hull---------------
         for line in obsLines:
-            #hull = map2img(obHull)
-            #line = map2img(line)
-            print("line: " + str(line))
-            #print(str(line))
             mk.marker(line)
-     
 
-        
-    allVertices = obsVertices + strtEnd#<--------------------list of all vertices including start and end
+    #all vertices including start and end
+    allVertices = obsVertices + strtEnd
+
     #list of all edges connecting vertices of object hulls avoid collisions
-    #add start and end as hull 
+    #add start and end to hull 
     obstacleHulls.append(strtEnd)
     lines = cm.createLines(obstacleHulls, obsEdges)
         
-    path = dj.setup(allVertices,lines,start,goal)
+	#get and print path
+    path = dj.getPath(allVertices,lines,start,goal)
     dj._print(path)
-    #-------------------draws lines onto the map------------
+
+	#draw edges(red)
     for line in lines:
-        #lineImg = map2img(line)
         mk.marker(line)
-        #line = 0
-        #cv2.drawContours(img, [lineImg.reshape(-1, 1, 2)],-1, (255,255, 10))
                 
+	#draw path(green)
     for line in path:
         mk.marker(line,True)
         
-        
 if __name__ == '__main__':
     main()
-
-        
