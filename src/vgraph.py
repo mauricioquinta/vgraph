@@ -5,6 +5,7 @@ import cv2
 from scipy.spatial import ConvexHull, convex_hull_plot_2d
 from marker import myMarker
 from create_map import load_obstacles, load_goal, orientation, extraPointsMod, createLines, isCollision, getEdges, isIntersect, map2img, img2map
+import djikstra
 import rospy
 
 def main():
@@ -64,8 +65,6 @@ def main():
             mk.marker(line)
      
 
-
-
         
     allVertices = obsVertices + strtEnd#<--------------------list of all vertices including start and end
     #list of all edges connecting vertices of object hulls avoid collisions
@@ -73,6 +72,8 @@ def main():
     obstacleHulls.append(strtEnd)
     lines = createLines(obstacleHulls, obsEdges)
         
+    path = djikstra.setup(allVertices,lines,start,goal)
+    print(path)
     #-------------------draws lines onto the map------------
     for line in lines:
         #lineImg = map2img(line)
@@ -80,6 +81,8 @@ def main():
         #line = 0
         #cv2.drawContours(img, [lineImg.reshape(-1, 1, 2)],-1, (255,255, 10))
                 
+    for line in path:
+        mk.marker(line,True)
         
         
 

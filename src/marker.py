@@ -20,7 +20,7 @@ class myMarker(object):
         rospy.loginfo("this is some example stuff")
 
     
-    def marker(self, vertices):
+    def marker(self, vertices, isPath=False):
 
         #basic marker stuff
         line = Marker()
@@ -33,7 +33,10 @@ class myMarker(object):
 
         #more color, scale, point
         line.color.a = 1.0
-        line.color.r = 5.0
+        if isPath:
+            line.color.g = 5.0
+        else:
+            line.color.r = 5.0
         line.scale.x = 0.02
         line.scale.y = 0.02
         line.scale.z = 0.02
