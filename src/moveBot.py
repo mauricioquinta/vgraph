@@ -86,7 +86,7 @@ def main():
 
     print("loading data")
     lines = []
-    with open('lines.data', 'rb') as filehandle:
+    with open('path.data', 'rb') as filehandle:
         lines = pickle.load(filehandle)
         
     print("init robot")
